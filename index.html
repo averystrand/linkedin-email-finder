@@ -2,40 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Find email from LinkedIn URL</title>
+  <title>LinkedIn → Email Finder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      max-width: 600px;
+    }
+    h2 {
+      margin-bottom: 1rem;
+    }
+    input {
+      width: 400px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    button {
+      padding: 8px 12px;
+      margin-left: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #result {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-  <h2>Find email from LinkedIn URL</h2>
-  <input type="text" id="linkedinUrl" placeholder="Paste LinkedIn URL here" style="width:400px">
+  <h2>Find Email from LinkedIn URL</h2>
+  <input type="text" id="linkedinUrl" placeholder="Paste LinkedIn URL here">
   <button onclick="lookupEmail()">Submit</button>
   <p id="result"></p>
 
   <script>
     async function lookupEmail() {
       const url = document.getElementById("linkedinUrl").value.trim();
-      document.getElementById("result").textContent = "Looking up...";
+      const resultBox = document.getElementById("result");
+      resultBox.textContent = "Looking up...";
+
+      if (!url) {
+        resultBox.textContent = "Please enter a LinkedIn URL.";
+        return;
+      }
 
       try {
-        const response = await fetch("https://api.clay.run/v1/tables/t_0t2suhjwAyAp2rZnoGp/query", {
+        const response = await fetch("https://linkedin-email-finder-proxy.vercel.app/api/lookup", {
           method: "POST",
-          headers: {
-            "Authorization": "Bearer 15ad0642ba4258f3e4c1",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            filters: {
-              "LinkedIn URL": url
-            }
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ linkedinUrl: url })
         });
 
         const data = await response.json();
-        console.log(data); // for debugging
+        console.log("Proxy response:", data);
 
-        const email = data?.rows?.[0]?.["Email"];
-        document.getElementById("result").textContent = email || "No email found.";
+        if (data.email) {
+          resultBox.textContent = `Email: ${data.email}`;
+        } else if (data.error) {
+          resultBox.textContent = `Error: ${data.error}`;
+        } else {
+          resultBox.textContent = "No email found.";
+        }
       } catch (err) {
-        document.getElementById("result").textContent = "Error: " + err.message;
+        resultBox.textContent = "Error: " + err.message;
       }
     }
   </script>
