@@ -1,38 +1,59 @@
-<script>
-  async function lookupEmail() {
-    const url = document.getElementById("linkedinUrl").value.trim();
-    const resultBox = document.getElementById("result");
-    resultBox.textContent = "Looking up...";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LinkedIn → Email Finder</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; max-width: 600px; }
+    h2 { margin-bottom: 1rem; }
+    input { width: 400px; padding: 8px; font-size: 14px; }
+    button { padding: 8px 12px; margin-left: 8px; font-size: 14px; cursor: pointer; }
+    #result { margin-top: 1rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Find Email from LinkedIn URL</h2>
+  <input type="text" id="linkedinUrl" placeholder="Paste LinkedIn URL here">
+  <button onclick="lookupEmail()">Submit</button>
+  <p id="result"></p>
 
-    if (!url) {
-      resultBox.textContent = "Please enter a LinkedIn URL.";
-      return;
-    }
+  <script>
+    async function lookupEmail() {
+      const url = document.getElementById("linkedinUrl").value.trim();
+      const resultBox = document.getElementById("result");
+      resultBox.textContent = "Looking up...";
 
-    try {
-      await fetch("https://linkedin-email-finder-proxy.vercel.app/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Linkedin_URL: url })
-      });
-
-      resultBox.textContent = "Waiting for enrichment…";
-
-      let email = null;
-      let attempts = 0;
-
-      while (!email && attempts < 20) {
-        attempts++;
-        await new Promise(r => setTimeout(r, 3000));
-
-        const res = await fetch(`https://linkedin-email-finder-proxy.vercel.app/api/notify?url=${encodeURIComponent(url)}`);
-        const data = await res.json();
-        email = data?.normalized?.Email;
+      if (!url) {
+        resultBox.textContent = "Please enter a LinkedIn URL.";
+        return;
       }
 
-      resultBox.textContent = email ? `Email: ${email}` : "No email found.";
-    } catch (err) {
-      resultBox.textContent = "Error: " + err.message;
+      try {
+        await fetch("https://linkedin-email-finder-proxy.vercel.app/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ Linkedin_URL: url })
+        });
+
+        resultBox.textContent = "Waiting for enrichment…";
+
+        let email = null;
+        let attempts = 0;
+
+        while (!email && attempts < 20) {
+          attempts++;
+          await new Promise(r => setTimeout(r, 3000));
+
+          const res = await fetch(`https://linkedin-email-finder-proxy.vercel.app/api/notify?url=${encodeURIComponent(url)}`);
+          const data = await res.json();
+          email = data?.normalized?.Email;
+        }
+
+        resultBox.textContent = email ? `Email: ${email}` : "No email found.";
+      } catch (err) {
+        resultBox.textContent = "Error: " + err.message;
+      }
     }
-  }
-</script>
+  </script>
+</body>
+</html>
